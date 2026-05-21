@@ -3,48 +3,26 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const mod = b.addModule("o_z0160_smart_pointers", .{
+
+    const smart_ptr_module = b.addModule("o_z0160_smart_pointers", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
+        .optimize = optimize,
     });
 
-    const exe = b.addExecutable(.{
-        .name = "o_z0160_smart_pointers",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = &.{
-                .{ .name = "o_z0160_smart_pointers", .module = mod },
-            },
-        }),
+    const lib = b.addLibrary(.{
+        .name = "unique-ptr",
+        .root_module = smart_ptr_module,
     });
 
-    b.installArtifact(exe);
+    b.installArtifact(lib);
 
-    const run_step = b.step("run", "Run the app");
-
-    const run_cmd = b.addRunArtifact(exe);
-    run_step.dependOn(&run_cmd.step);
-
-    run_cmd.step.dependOn(b.getInstallStep());
-
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
-
-    const mod_tests = b.addTest(.{
-        .root_module = mod,
+    const smart_ptr_test = b.addTest(.{
+        .root_module = smart_ptr_module,
     });
 
-    const run_mod_tests = b.addRunArtifact(mod_tests);
-    const exe_tests = b.addTest(.{
-        .root_module = exe.root_module,
-    });
+    const run_smart_ptr_test = b.addRunArtifact(smart_ptr_test);
 
-    const run_exe_tests = b.addRunArtifact(exe_tests);
-
-    const test_step = b.step("test", "Run tests");
-    test_step.dependOn(&run_mod_tests.step);
-    test_step.dependOn(&run_exe_tests.step);
+    const test_step = b.step("test", "Run library tests");
+    test_step.dependOn(&run_smart_ptr_test.step);
 }
